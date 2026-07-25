@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package cache.v1;
+
+option go_package = "github.com/Junny20/paged-cache/gen/cachepb;cachepb";
+
+// Cache is a paged key-value cache backed by a fixed-size block arena. Each
+// client owns a logical sequence addressed by byte offset; the service maps
+// those offsets onto physical blocks through a per-sequence block table.
+
+service Cache {
+  // Allocate creates a new empty sequence and returns its handle. When
+  // parent_seq_id is set, the new sequence starts as a copy-on-write clone of
+  // the parent, sharing the parent's blocks until it first diverges.
+  rpc Allocate(AllocateRequest) returns (AllocateResponse);
+
+  // Write copies data into the sequence starting at the given logical offset,
+  // growing the sequence one block at a time as needed.
+  rpc Write(WriteRequest) returns (WriteResponse);
+
+  // Read returns length bytes from the sequence starting at the given offset.
+  rpc Read(ReadRequest) returns (ReadResponse);
+
+  // Free releases a sequence. Blocks it holds are returned to the arena once
+  // no other sequence references them.
+  rpc Free(FreeRequest) returns (FreeResponse);
+
+  // Stats reports arena occupancy and is used by the load generator to reason
+  // about fragmentation and residency.
+  rpc Stats(StatsRequest) returns (StatsResponse);
+}
+
+message AllocateRequest {
+  // parent_seq_id, when non-zero, requests a copy-on-write clone of an existing
+  // sequence. Zero requests a fresh empty sequence.
+  uint64 parent_seq_id = 1;
+}
+
+message AllocateResponse {
+  uint64 seq_id = 1;
+}
+
+message WriteRequest {
+  uint64 seq_id = 1;
+  uint64 offset = 2;
+  bytes data = 3;
+}
+
+message WriteResponse {
+  uint64 bytes_written = 1;
+}
+
+message ReadRequest {
+  uint64 seq_id = 1;
+  uint64 offset = 2;
+  uint64 length = 3;
+}
+
+message ReadResponse {
+  bytes data = 1;
+}
+
+message FreeRequest {
+  uint64 seq_id = 1;
+}
+
+message FreeResponse {}
+
+message StatsRequest {}
+
+message StatsResponse {
+  uint32 block_size = 1;
+  uint32 total_blocks = 2;
+  uint32 free_blocks = 3;
+  uint64 live_sequences = 4;
+}

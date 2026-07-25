@@ -1,0 +1,12 @@
+# Build artifacts
+/bin/
+
+# Test and coverage output
+*.out
+*.test
+
+# Editor and OS cruft
+.DS_Store
+*.swp
+.idea/
+.vscode/

@@ -1,4 +1,4 @@
-.PHONY: all proto build test race vet fmt server loadgen clean tools
+.PHONY: all proto build test race measure vet fmt server loadgen clean tools
 
 MODULE      := github.com/Junny20/paged-cache
 PROTO       := api/proto/cache.proto
@@ -27,6 +27,10 @@ test:
 ## race: run unit tests under the race detector
 race:
 	go test ./... -count=1 -race
+
+## measure: run the memory-footprint measurements (fragmentation, residency)
+measure:
+	go test -v ./bench/measure/
 
 ## vet: run go vet
 vet:
